@@ -49,8 +49,8 @@ def create_category():
         return jsonify({'error': 'Database connection failed'}), 500
     
     cursor = conn.cursor()
-    query = 'INSERT INTO categories (name, color) VALUES (%s, %s)'
-    cursor.execute(query, (data['name'], data['color']))
+    query = 'INSERT INTO categories (name, color,userid) VALUES (%s, %s, %s)'
+    cursor.execute(query, (data['name'], data['color'],1))
     conn.commit()
     
     category_id = cursor.lastrowid
@@ -139,13 +139,14 @@ def create_expense():
     
     cursor = conn.cursor()
     query = '''
-        INSERT INTO expenses (description, amount, category_id, date)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO expenses (description, amount, category_id, userid, date)
+        VALUES (%s, %s, %s, %s, %s)
     '''
     cursor.execute(query, (
         data['description'],
         data['amount'],
         data['category_id'],
+        request.headers.get("userid"),
         data['date']
     ))
     conn.commit()
