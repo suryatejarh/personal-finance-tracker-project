@@ -1,0 +1,17 @@
+/* @import "tailwindcss"; */
+/* @import "tailwindcss/components";
+@import "tailwindcss/utilities"; */
+
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+        body {
+            background: linear-gradient(to bottom right, #faf5ff, #eff6ff, #fce7f3);
+            min-height: 100vh;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #9333ea, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }

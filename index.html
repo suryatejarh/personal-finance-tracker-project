@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #faf5ff, #eff6ff, #fce7f3);
+            min-height: 100vh;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #9333ea, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="max-w-7xl mx-auto p-6">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold gradient-text mb-2">Finance Tracker</h1>
+            <p class="text-gray-600">Track your expenses and manage your budget</p>
+        </div>
+
+        <!-- Total Spent Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border-2 border-purple-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-2">Total Spent</p>
+                    <p id="totalSpent" class="text-5xl font-bold text-purple-600">₹0.00</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-blue-500 p-6 rounded-2xl">
+                    <svg class="text-white" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Expenses Section -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border-2 border-blue-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">💰 Expenses</h2>
+                    <button onclick="showExpenseModal()" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition shadow-md">
+                        ➕ Add Expense
+                    </button>
+                </div>
+                <div id="expensesList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-8">Loading expenses...</p>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border-2 border-purple-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">🏷️ Categories</h2>
+                    <button onclick="showCategoryModal()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition shadow-md">
+                        ➕ Add Category
+                    </button>
+                </div>
+                <div id="categoriesList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-8">Loading categories...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 id="expenseModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add New Expense</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <input type="text" id="expenseDescription" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Grocery shopping">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (₹)</label>
+                    <input type="number" step="0.01" id="expenseAmount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0.00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select id="expenseCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select a category</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <input type="date" id="expenseDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveExpense()" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition shadow-md">
+                        Save Expense
+                    </button>
+                    <button onclick="hideExpenseModal()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="categoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 id="categoryModalTitle" class="text-2xl font-bold mb-6 text-gray-800">Add New Category</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                    <input type="text" id="categoryName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="e.g., Food, Transport">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                    <input type="color" id="categoryColor" value="#3B82F6" class="w-full h-12 rounded-lg cursor-pointer border border-gray-300">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveCategory()" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-md">
+                        Save Category
+                    </button>
+                    <button onclick="hideCategoryModal()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let expenses = [];
+        let categories = [];
+        let editingExpenseId = null;
+        let editingCategoryId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setTodayDate();
+        });
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseDate').value = today;
+        }
+
+        async function loadData() {
+            await loadCategories();
+            await loadExpenses();
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}/categories`);
+                categories = await response.json();
+                renderCategories();
+                updateCategorySelect();
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function loadExpenses() {
+            try {
+                const response = await fetch(`${API_URL}/expenses`);
+                expenses = await response.json();
+                renderExpenses();
+                updateTotal();
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        function renderExpenses() {
+            const container = document.getElementById('expensesList');
+            if (expenses.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-8">No expenses yet. Add your first expense!</p>';
+                return;
+            }
+
+            container.innerHTML = expenses.map(expense => {
+                const category = categories.find(c => c.id === expense.category_id);
+                return `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200 hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800">${expense.description}</h3>
+                                <div class="flex items-center gap-3 mt-2 text-sm text-gray-600">
+                                    <span>📅 ${expense.date}</span>
+                                    <span style="color: ${category?.color || '#6B7280'}">🏷️ ${category?.name || 'Uncategorized'}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-purple-600">₹${parseFloat(expense.amount).toFixed(2)}</p>
+                                <div class="flex gap-2 mt-2">
+                                    <button onclick="editExpense(${expense.id})" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteExpense(${expense.id})" class="text-red-600 hover:text-red-800">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categoriesList');
+            if (categories.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-8">No categories yet. Add your first category!</p>';
+                return;
+            }
+
+            container.innerHTML = categories.map(category => `
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-200 hover:shadow-md transition">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full" style="background-color: ${category.color}"></div>
+                            <span class="font-semibold text-gray-800">${category.name}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editCategory(${category.id})" class="text-blue-600 hover:text-blue-800">✏️</button>
+                            <button onclick="deleteCategory(${category.id})" class="text-red-600 hover:text-red-800">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCategorySelect() {
+            const select = document.getElementById('expenseCategory');
+            select.innerHTML = '<option value="">Select a category</option>' +
+                categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+        }
+
+        function updateTotal() {
+            const total = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            document.getElementById('totalSpent').textContent = `₹${total.toFixed(2)}`;
+        }
+
+        // Expense functions
+        function showExpenseModal() {
+            editingExpenseId = null;
+            document.getElementById('expenseModalTitle').textContent = 'Add New Expense';
+            document.getElementById('expenseDescription').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseCategory').value = '';
+            setTodayDate();
+            document.getElementById('expenseModal').classList.remove('hidden');
+        }
+
+        function hideExpenseModal() {
+            document.getElementById('expenseModal').classList.add('hidden');
+        }
+
+        function editExpense(id) {
+            const expense = expenses.find(e => e.id === id);
+            if (!expense) return;
+
+            editingExpenseId = id;
+            document.getElementById('expenseModalTitle').textContent = 'Edit Expense';
+            document.getElementById('expenseDescription').value = expense.description;
+            document.getElementById('expenseAmount').value = expense.amount;
+            document.getElementById('expenseCategory').value = expense.category_id;
+            document.getElementById('expenseDate').value = expense.date;
+            document.getElementById('expenseModal').classList.remove('hidden');
+        }
+
+        async function saveExpense() {
+            const description = document.getElementById('expenseDescription').value;
+            const amount = document.getElementById('expenseAmount').value;
+            const category_id = document.getElementById('expenseCategory').value;
+            const date = document.getElementById('expenseDate').value;
+
+            if (!description || !amount || !category_id || !date) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const data = { description, amount, category_id, date };
+            const url = editingExpenseId ? `${API_URL}/expenses/${editingExpenseId}` : `${API_URL}/expenses`;
+            const method = editingExpenseId ? 'PUT' : 'POST';
+
+            try {
+                await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                hideExpenseModal();
+                await loadExpenses();
+            } catch (error) {
+                console.error('Error saving expense:', error);
+                alert('Error saving expense');
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm('Are you sure you want to delete this expense?')) return;
+
+            try {
+                await fetch(`${API_URL}/expenses/${id}`, { method: 'DELETE' });
+                await loadExpenses();
+            } catch (error) {
+                console.error('Error deleting expense:', error);
+                alert('Error deleting expense');
+            }
+        }
+
+        // Category functions
+        function showCategoryModal() {
+            editingCategoryId = null;
+            document.getElementById('categoryModalTitle').textContent = 'Add New Category';
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryColor').value = '#3B82F6';
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        function hideCategoryModal() {
+            document.getElementById('categoryModal').classList.add('hidden');
+        }
+
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;
+
+            editingCategoryId = id;
+            document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryColor').value = category.color;
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        async function saveCategory() {
+            const name = document.getElementById('categoryName').value;
+            const color = document.getElementById('categoryColor').value;
+
+            if (!name) {
+                alert('Please enter a category name');
+                return;
+            }
+
+            const data = { name, color };
+            const url = editingCategoryId ? `${API_URL}/categories/${editingCategoryId}` : `${API_URL}/categories`;
+            const method = editingCategoryId ? 'PUT' : 'POST';
+
+            try {
+                await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                hideCategoryModal();
+                await loadCategories();
+            } catch (error) {
+                console.error('Error saving category:', error);
+                alert('Error saving category');
+            }
+        }
+
+        async function deleteCategory(id) {
+            if (!confirm('Are you sure you want to delete this category?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/categories/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Error deleting category');
+                    return;
+                }
+                await loadCategories();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                alert('Error deleting category');
+            }
+        }
+    </script>
+</body>
+</html>
