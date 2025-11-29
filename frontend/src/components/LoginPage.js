@@ -9,8 +9,18 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     // Replace with your backend API call later
-    console.log("Logging in:", { userId, password });
-    navigate("/home");
+    console.log("Logging in:", { userID:userId, password:password });
+    const response = await fetch('http://localhost:5000/api/login',{method: 'POST',
+    headers: { 'content-type': 'application/json'
+    },body: JSON.stringify({userID:userId, password:password})});
+    const data = await response.json();
+   
+    if(data.success){
+      alert("Login successful!");
+      navigate("/home");
+    } else {
+      alert("Invalid credentials");
+    }
   };
 
   return (

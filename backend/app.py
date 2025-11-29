@@ -5,7 +5,7 @@ from mysql.connector import Error
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app,resources={r"/api/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
 # Database configuration
 DB_CONFIG = {
@@ -243,6 +243,186 @@ def get_spending_by_category():
     conn.close()
     
     return jsonify(results)
+
+@app.route('/api/login', methods=['POST', 'OPTIONS'])
+def login_user():
+    """Get user by userID"""
+    if request.method == 'OPTIONS':
+        return jsonify({}), 200
+    
+    data=request.get_json()
+    userID=data.get("userID")
+    password=data.get("password")
+    if not userID or not password:
+        return jsonify({'error': 'Missing userID or password'}), 400
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM users WHERE userName = %s', (userID,))
+    user = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    if(user) and user['password']==password:
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user['id'],
+                'userName': user['userName'],
+                'name': user['name']
+            }
+        })
+    else:
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+
+@app.route('/api/expenses/pie-data', methods=['GET'])
+def pie_data():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT c.name AS category, SUM(e.amount) AS total
+        FROM expenses e
+        JOIN categories c ON e.category_id = c.id
+        GROUP BY c.id, c.name
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
+
+@app.route('/api/expenses/monthly-data', methods=['GET'])
+def monthly_data():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DATE_FORMAT(e.date, '%Y-%m') AS month,
+               c.name AS category,
+               SUM(e.amount) AS total
+        FROM expenses e
+        JOIN categories c ON e.category_id = c.id
+        GROUP BY month, category
+        ORDER BY month
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+@app.route('/api/expenses/pie-data-range', methods=['GET'])
+def pie_data_range():
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({'success': False, 'message': 'Start and end dates required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT c.name AS category, SUM(e.amount) AS total
+        FROM expenses e
+        JOIN categories c ON e.category_id = c.id
+        WHERE e.date BETWEEN %s AND %s
+        GROUP BY c.id, c.name
+    """, (start, end))
+
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/expenses/monthly-data-range', methods=['GET'])
+def monthly_data_range():
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({'success': False, 'message': 'Start and end dates required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            DATE_FORMAT(e.date, '%Y-%m') AS month,
+            c.name AS category,
+            SUM(e.amount) AS total
+        FROM expenses e
+        JOIN categories c ON e.category_id = c.id
+        WHERE e.date BETWEEN %s AND %s
+        GROUP BY month, category
+        ORDER BY month
+    """, (start, end))
+
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({'success': True, 'data': data})
+
+@app.route('/api/expenses/summary-range', methods=['GET'])
+def summary_range():
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({'success': False, 'message': 'Start and end dates required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Total Spend
+    cursor.execute("""
+        SELECT SUM(amount) AS total_spend
+        FROM expenses 
+        WHERE date BETWEEN %s AND %s
+    """, (start, end))
+    total = cursor.fetchone()['total_spend'] or 0
+
+    # Average Spend
+    cursor.execute("""
+        SELECT AVG(amount) AS avg_spend
+        FROM expenses 
+        WHERE date BETWEEN %s AND %s
+    """, (start, end))
+    avg = cursor.fetchone()['avg_spend'] or 0
+
+    # Highest Category
+    cursor.execute("""
+        SELECT c.name AS category, SUM(e.amount) AS cat_total
+        FROM expenses e
+        JOIN categories c ON e.category_id = c.id
+        WHERE e.date BETWEEN %s AND %s
+        GROUP BY c.id
+        ORDER BY cat_total DESC
+        LIMIT 1
+    """, (start, end))
+    highest = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        'success': True,
+        'total_spend': float(total),
+        'avg_spend': float(avg),
+        'highest_category': highest['category'] if highest else None,
+        'highest_category_total': float(highest['cat_total']) if highest else None
+    })
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
