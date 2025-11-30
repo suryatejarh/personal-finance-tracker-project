@@ -15,7 +15,7 @@ export default function CategoryModal({ close, editingCategory, refresh }) {
     const method = editingCategory ? "PUT" : "POST";
     await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "userid":1 },
       body: JSON.stringify(form),
     });
     refresh();

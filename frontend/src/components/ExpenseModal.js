@@ -20,7 +20,7 @@ export default function ExpenseModal({ close, editingExpense, categories, refres
     const method = editingExpense ? "PUT" : "POST";
     await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json","userid":1 },
       body: JSON.stringify(form),
     });
     refresh();
